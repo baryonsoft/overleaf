@@ -187,6 +187,7 @@ const UserSchema = new Schema(
     splitTests: Schema.Types.Mixed,
     analyticsId: { type: String },
     surveyResponses: Schema.Types.Mixed,
+    oidcUID: { type: String },
   },
   { minimize: false }
 )
