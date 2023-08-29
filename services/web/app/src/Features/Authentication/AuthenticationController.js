@@ -570,6 +570,7 @@ const AuthenticationController = {
   },
 
   verifyOpenIDConnect(issuer, profile, callback) {
+      // eslint-disable-next-line n/handle-callback-err
       User.findOne({oidcUID: profile.username}, (error, user) => {
         if (!user) {
           UserCreator.createNewUser({
@@ -585,7 +586,7 @@ const AuthenticationController = {
           user.first_name = profile.name.givenName;
           user.last_name = profile.name.familyName;
           user.oidcUID = profile.username;
-          if (user.email != profile.emails[0].value) {
+          if (user.email !== profile.emails[0].value) {
             user.email = profile.emails[0].value;
 
             const reversedHostname = user.email.split('@')[1].split('').reverse().join('')
