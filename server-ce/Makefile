@@ -1,7 +1,7 @@
 # Makefile
 
-export SHARELATEX_BASE_TAG := registry.gitlab.fachschaften.org/tudo-fsinfo/admin/overleaf/base
-export SHARELATEX_TAG := registry.gitlab.fachschaften.org/tudo-fsinfo/admin/overleaf
+export SHARELATEX_BASE_TAG := ghcr.io/baryonsoft/overleaf/sharelatex-base
+export SHARELATEX_TAG := ghcr.io/baryonsoft/overleaf/sharelatex
 export SHARELATEX_BASE_CACHE := $(shell echo $(SHARELATEX_BASE_TAG) | sed -E 's/(.+):.+/\1:latest/')
 export MONOREPO_REVISION := $(shell git rev-parse HEAD)
 MONOREPO_ROOT := ../
