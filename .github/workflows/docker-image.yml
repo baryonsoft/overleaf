@@ -42,9 +42,9 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build the community edition image
+      - name: Build the latest image
         working-directory: server-ce
-        run: make build-community
+        run: make build-latest
 
       - name: Push image
         run: docker push ghcr.io/baryonsoft/overleaf/sharelatex

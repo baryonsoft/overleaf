@@ -19,4 +19,10 @@ build-community:
 	docker build --build-arg SHARELATEX_BASE_TAG --build-arg MONOREPO_REVISION -f Dockerfile -t $(SHARELATEX_TAG) $(MONOREPO_ROOT)
 
 
+build-latest:
+	cp .dockerignore $(MONOREPO_ROOT)
+	docker pull $(SHARELATEX_TAG) || echo "nothing cached yet"
+	docker build --build-arg SHARELATEX_BASE_TAG --build-arg MONOREPO_REVISION -f Dockerfile --pull --cache-from $(SHARELATEX_TAG) -t $(SHARELATEX_TAG) $(MONOREPO_ROOT)
+
+
 .PHONY: all build-base build-community
