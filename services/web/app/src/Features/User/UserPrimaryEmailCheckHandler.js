@@ -1,3 +1,4 @@
+/* eslint-disable no-unreachable */
 const Settings = require('@overleaf/settings')
 
 function requiresPrimaryEmailCheck({
