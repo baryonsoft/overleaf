@@ -37,7 +37,7 @@ jobs:
 
       - name: Build the latest image
         working-directory: server-ce
-        run: make build-latest
+        run: make build-community
 
       - name: Push image
         run: docker push ghcr.io/baryonsoft/overleaf/sharelatex
