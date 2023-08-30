@@ -188,6 +188,7 @@ const UserSchema = new Schema(
     analyticsId: { type: String },
     surveyResponses: Schema.Types.Mixed,
     oidcUID: { type: String },
+    completedTutorials: Schema.Types.Mixed,
   },
   { minimize: false }
 )

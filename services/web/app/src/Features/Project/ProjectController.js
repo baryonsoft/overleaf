@@ -437,7 +437,7 @@ const ProjectController = {
             )
             User.findById(
               userId,
-              'email first_name last_name referal_id signUpDate featureSwitches features featuresEpoch refProviders alphaProgram betaProgram isAdmin ace labsProgram',
+              'email first_name last_name referal_id signUpDate featureSwitches features featuresEpoch refProviders alphaProgram betaProgram isAdmin ace labsProgram completedTutorials',
               (err, user) => {
                 // Handle case of deleted user
                 if (user == null) {
@@ -637,21 +637,6 @@ const ProjectController = {
             req,
             res,
             'editor-left-menu',
-            (error, assignment) => {
-              // do not fail editor load if assignment fails
-              if (error) {
-                cb(null, { variant: 'default' })
-              } else {
-                cb(null, assignment)
-              }
-            }
-          )
-        },
-        editorDocumentationButton(cb) {
-          SplitTestHandler.getAssignment(
-            req,
-            res,
-            'documentation-on-editor',
             (error, assignment) => {
               // do not fail editor load if assignment fails
               if (error) {
@@ -892,6 +877,7 @@ const ProjectController = {
                 alphaProgram: user.alphaProgram,
                 betaProgram: user.betaProgram,
                 labsProgram: user.labsProgram,
+                completedTutorials: user.completedTutorials,
                 isAdmin: hasAdminAccess(user),
               },
               userSettings: {
