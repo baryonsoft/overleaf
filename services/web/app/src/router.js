@@ -471,6 +471,13 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
     ProjectListController.getProjectsJson
   )
 
+  webRouter.get(
+    '/api/projects',
+    AuthenticationController.requireToken(),
+    RateLimiterMiddleware.rateLimit(rateLimiters.getProjects),
+    ProjectListController.getProjectsJson
+  )
+
   for (const route of [
     // Keep the old route for continuous metrics
     '/Project/:Project_id',
@@ -817,8 +824,8 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
     AuthorizationMiddleware.ensureUserCanReadProject,
     Settings.allowAnonymousReadAndWriteSharing
       ? (req, res, next) => {
-          next()
-        }
+        next()
+      }
       : AuthenticationController.requireLogin(),
     MetaController.getMetadata
   )
@@ -827,8 +834,8 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
     AuthorizationMiddleware.ensureUserCanReadProject,
     Settings.allowAnonymousReadAndWriteSharing
       ? (req, res, next) => {
-          next()
-        }
+        next()
+      }
       : AuthenticationController.requireLogin(),
     MetaController.broadcastMetadataForDoc
   )

@@ -140,6 +140,7 @@
     "parse-data-url": "^2.0.0",
     "passport": "^0.4.1",
     "passport-google-oauth20": "^2.0.0",
+    "passport-jwt": "^4.0.1",
     "passport-ldapauth": "^2.1.4",
     "passport-local": "^1.0.0",
     "passport-oauth2": "^1.5.0",

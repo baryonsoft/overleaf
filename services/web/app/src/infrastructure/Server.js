@@ -24,6 +24,8 @@ const bearerTokenMiddleware = require('express-bearer-token')
 
 const passport = require('passport')
 const OpenIDConnectStrategy = require('passport-openidconnect').Strategy
+const JwtStrategy = require('passport-jwt').Strategy;
+const ExtractJwt = require('passport-jwt').ExtractJwt;
 
 const oneDayInMilliseconds = 86400000
 const ReferalConnect = require('../Features/Referal/ReferalConnect')
@@ -188,6 +190,14 @@ passport.use(new OpenIDConnectStrategy({
       scope: 'openid profile email',
     },
     AuthenticationController.verifyOpenIDConnect));
+
+passport.use(new JwtStrategy({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: process.env.OIDC_PUBLIC_KEY,
+      issuer: process.env.OIDC_ISSUER,
+      algorithms: ["RS256"]
+    },
+    AuthenticationController.verifyToken));
 
 passport.serializeUser(AuthenticationController.serializeUser)
 passport.deserializeUser(AuthenticationController.deserializeUser)

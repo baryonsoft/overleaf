@@ -335,6 +335,16 @@ const AuthenticationController = {
     }
   },
 
+  requireToken() {
+    return function (req, res, next) {
+      return passport.authenticate('jwt', { session: false },
+        function (err, user) {
+          if (err) return next(err)
+          if (user) req.user = user
+        })(req, res, next)
+    }
+  },
+
   validateUserSession: function () {
     // Middleware to check that the user's session is still good on key actions,
     // such as opening a a project. Could be used to check that session has not
@@ -569,9 +579,33 @@ const AuthenticationController = {
     )(req, res, next)
   },
 
+  verifyToken(jwtPayload, done) {
+    User.findOne({ oidcUID: jwtPayload.email }, function (err, user) {
+      if (err) {
+        return done(err, false);
+      }
+      if (user) {
+        return done(null, user);
+      } else {
+        UserCreator.createNewUser({
+          holdingAccount: false,
+          email: jwtPayload.email,
+          first_name: jwtPayload.given_name,
+          last_name: jwtPayload.family_name,
+          oidcUID: jwtPayload.email
+        }, function (user) {
+          return done(null, user);
+        })
+        return done(null, false);
+      }
+    });
+  },
+
   verifyOpenIDConnect(issuer, profile, callback) {
-      // eslint-disable-next-line n/handle-callback-err
-      User.findOne({oidcUID: profile.username}, (error, user) => {
+      User.findOne({oidcUID: profile.username}, (err, user) => {
+        if (err) {
+          return callback(err);
+        }
         if (!user) {
           UserCreator.createNewUser({
             holdingAccount: false,
