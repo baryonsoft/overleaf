@@ -116,8 +116,6 @@ services:
     command: ["npm", "run", "nodemon"]
     environment:
       - NODE_APP_OPTIONS=--inspect=0.0.0.0:9229
-    env_file:
-      - .env
     ports:
       - "127.0.0.1:9229:9229"
     volumes:

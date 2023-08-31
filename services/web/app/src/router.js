@@ -824,8 +824,8 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
     AuthorizationMiddleware.ensureUserCanReadProject,
     Settings.allowAnonymousReadAndWriteSharing
       ? (req, res, next) => {
-        next()
-      }
+          next()
+        }
       : AuthenticationController.requireLogin(),
     MetaController.getMetadata
   )
@@ -834,8 +834,8 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
     AuthorizationMiddleware.ensureUserCanReadProject,
     Settings.allowAnonymousReadAndWriteSharing
       ? (req, res, next) => {
-        next()
-      }
+          next()
+        }
       : AuthenticationController.requireLogin(),
     MetaController.broadcastMetadataForDoc
   )
