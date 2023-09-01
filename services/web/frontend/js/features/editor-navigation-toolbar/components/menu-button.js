@@ -1,15 +1,11 @@
 import PropTypes from 'prop-types'
-import { useTranslation } from 'react-i18next'
 import Icon from '../../../shared/components/icon'
 
 function MenuButton({ onClick }) {
-  const { t } = useTranslation()
-
   return (
     <div className="toolbar-item">
-      <button className="btn btn-full-height" onClick={onClick}>
-        <Icon type="bars" fw className="editor-menu-icon" />
-        <p className="toolbar-label">{t('menu')}</p>
+      <button className="btn btn-full-height" onClick={onClick} title="Menu">
+        <Icon type="bars" fw className="" />
       </button>
     </div>
   )
