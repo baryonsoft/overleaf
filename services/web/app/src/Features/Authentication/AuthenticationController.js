@@ -338,9 +338,9 @@ const AuthenticationController = {
   requireToken() {
     return function (req, res, next) {
       return passport.authenticate('jwt', { session: false },
-        function (err, user) {
+        function (err, user, info) {
           if (err) return next(err)
-          if (user) req.user = user
+          if (user) { req.user = user; return next() }
         })(req, res, next)
     }
   },
