@@ -477,6 +477,7 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
     RateLimiterMiddleware.rateLimit(rateLimiters.getProjects),
     ProjectListController.getProjectsJson
   )
+  AuthenticationController.addEndpointToLoginWhitelist('/api/projects')
 
   for (const route of [
     // Keep the old route for continuous metrics
