@@ -57,7 +57,6 @@ const ToolbarHeader = React.memo(function ToolbarHeader({
           <CobrandingLogo {...cobranding} />
         )}
       </div>
-      {window.showUpgradePrompt && <UpgradePrompt />}
       <ProjectNameEditableLabel
         className="toolbar-center"
         projectName={projectName}
