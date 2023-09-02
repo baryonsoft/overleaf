@@ -16,7 +16,7 @@ function BackToProjectsButton() {
         }}
       >
         <Icon
-          type="arrow-left"
+          type="home"
           fw
           accessibilityLabel={t('back_to_your_projects')}
         />

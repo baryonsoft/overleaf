@@ -50,8 +50,8 @@ const ToolbarHeader = React.memo(function ToolbarHeader({
       aria-label={t('project_layout_sharing_submission')}
     >
       <div className="toolbar-left">
-        <BackToProjectsButton />
         <BackToBaryonBibButton />
+        <BackToProjectsButton />
         <MenuButton onClick={onShowLeftMenuClick} />
         {cobranding && cobranding.logoImgUrl && (
           <CobrandingLogo {...cobranding} />

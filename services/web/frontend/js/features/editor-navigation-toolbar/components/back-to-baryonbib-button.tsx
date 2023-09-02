@@ -12,7 +12,7 @@ function BackToBaryonBibButton() {
           eventTracking.sendMB('navigation-clicked-home')
         }}
       >
-        <Icon type="home" fw />
+        <Icon type="arrow-left" fw />
       </a>
     </div>
   )
