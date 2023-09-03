@@ -1,0 +1,43 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    ":disableDependencyDashboard"
+  ],
+  "reviewers": [
+    "astrowq"
+  ],
+  "schedule": [
+    "every weekend"
+  ],
+  "addLabels": [
+    "dependencies"
+  ],
+  "enabledManagers": [
+    "npm",
+    "dockerfile",
+  ],
+  "ignoreDeps": [
+  ],
+  "packageRules": [
+    {
+      "matchPackagePatterns": [
+        "@types/*"
+      ],
+      "schedule": [
+        "after 6pm on the 15th day of the month"
+      ],
+      "groupName": "TypeScript Definitions"
+    }
+  ],
+  "pin": {
+    "enabled": false
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true
+  },
+  "automergeType": "branch",
+  "prConcurrentLimit": 5,
+  "rebaseWhen": "conflicted"
+}
