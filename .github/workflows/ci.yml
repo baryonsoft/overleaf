@@ -11,7 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - run: | 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+
+      - run: |
+          npm install
           make test_unit
           make test_acceptance
         working-directory: services/project-history
