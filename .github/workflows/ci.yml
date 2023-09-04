@@ -96,7 +96,7 @@ jobs:
       - run: make test_unit
         working-directory: services/document-updater
 
-      - run: make test_unit
+      - run: make test_acceptance
         working-directory: services/document-updater
 
   filestore:
