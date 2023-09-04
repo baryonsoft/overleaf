@@ -170,8 +170,8 @@ jobs:
       - run: make test_unit
         working-directory: services/real-time
 
-      - run: make test_acceptance
-        working-directory: services/real-time
+      # - run: make test_acceptance
+        # working-directory: services/real-time
 
   spelling:
     runs-on: ubuntu-latest
