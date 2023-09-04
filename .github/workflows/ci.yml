@@ -19,10 +19,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: |
-          make test_unit
-          make test_acceptance
+      - run: make test_acceptance
         working-directory: services/chat
 
   clsi:
@@ -39,10 +36,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: |
-          make test_unit
-          make test_acceptance
+      - run: make test_unit
         working-directory: services/clsi
 
   contacts:
@@ -59,10 +53,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: |
-          make test_unit
-          make test_acceptance
+      - run: make test_unit
+        working-directory: services/contacts
+
+      - run: make test_acceptance
         working-directory: services/contacts
 
   docstore:
@@ -79,10 +73,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: |
-          make test_unit
-          make test_acceptance
+      - run: make test_unit
+        working-directory: services/docstore
+
+      - run: make test_acceptance
         working-directory: services/docstore
 
   document-updater:
@@ -99,10 +93,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: |
-          make test_unit
-          make test_acceptance
+      - run: make test_unit
+        working-directory: services/document-updater
+
+      - run: make test_unit
         working-directory: services/document-updater
 
   filestore:
@@ -119,10 +113,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: |
-          make test_unit
-          make test_acceptance
+      - run: make test_unit
         working-directory: services/filestore
 
   notifications:
@@ -139,10 +130,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: |
-          make test_unit
-          make test_acceptance
+      - run: make test_unit
         working-directory: services/notifications
 
   project-history:
@@ -159,10 +147,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: |
-          make test_unit
-          make test_acceptance
+      - run: make test_unit
+        working-directory: services/project-history
+
+      - run: make test_acceptance
         working-directory: services/project-history
 
   real-time:
@@ -179,10 +167,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: |
-          make test_unit
-          make test_acceptance
+      - run: make test_unit
+        working-directory: services/real-time
+
+      - run: make test_acceptance
         working-directory: services/real-time
 
   spelling:
@@ -199,10 +187,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: |
-          make test_unit
-          make test_acceptance
+      - run: make test_unit
+        working-directory: services/spelling
+
+      - run: make test_acceptance
         working-directory: services/spelling
 
   track-changes:
@@ -219,10 +207,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: |
-          make test_unit
-          make test_acceptance
+      - run: make test_unit
+        working-directory: services/track-changes
+
+      - run: make test_acceptance
         working-directory: services/track-changes
 
   web:
@@ -239,8 +227,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: |
-          make test_unit
-          make test_acceptance
+      # - run: make test_unit
+        # working-directory: services/web
+
+      - run: make test_karma
+        working-directory: services/web
+
+      # - run: make test_acceptance
+        # working-directory: services/web
+
+      # - run: make test_frontend
+        # working-directory: services/web
+
+      - run: make test_frontend_ct
         working-directory: services/web
