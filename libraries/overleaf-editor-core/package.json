@@ -16,7 +16,7 @@
   "license": "Proprietary",
   "private": true,
   "devDependencies": {
-    "chai": "^3.3.0",
+    "chai": "^4.3.6",
     "istanbul": "^0.4.5",
     "mocha": "^10.2.0",
     "typescript": "^5.0.4"
