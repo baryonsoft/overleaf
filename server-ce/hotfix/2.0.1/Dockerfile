@@ -1,4 +1,4 @@
-FROM sharelatex/sharelatex:2.0.0
+FROM sharelatex/sharelatex:2.7.1
 
 
 # Patch 1: Fixes project deletion (https://github.com/overleaf/overleaf/issues/644)

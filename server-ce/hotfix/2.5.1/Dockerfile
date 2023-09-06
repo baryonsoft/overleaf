@@ -1,4 +1,4 @@
-FROM sharelatex/sharelatex:2.5.0
+FROM sharelatex/sharelatex:2.7.1
 
 # Patch #826: Fixes log path for contacts service to be picked up by logrotate
 COPY contacts-run.patch /etc/service/contacts-sharelatex

@@ -1,4 +1,4 @@
-FROM sharelatex/sharelatex:2.5.1
+FROM sharelatex/sharelatex:2.7.1
 
 # Patch: fixes registration token creation
 COPY create-token-lowercase-email.patch ${baseDir}

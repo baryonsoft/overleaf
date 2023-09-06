@@ -1,4 +1,4 @@
-FROM sharelatex/sharelatex:2.6.1
+FROM sharelatex/sharelatex:2.7.1
 
 # Patch: fixes overleaf.com onboarding email being sent in CE/SP
 COPY onboarding-email.patch ${baseDir}

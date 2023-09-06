@@ -1,4 +1,4 @@
-FROM sharelatex/sharelatex:2.4.0
+FROM sharelatex/sharelatex:2.7.1
 
 
 # Patch: Fixes missing dependencies on web startup (https://github.com/overleaf/overleaf/issues/767)

@@ -1,4 +1,4 @@
-FROM sharelatex/sharelatex:2.0.1
+FROM sharelatex/sharelatex:2.7.1
 
 
 # Patch 1: Fixes anonymous link sharing

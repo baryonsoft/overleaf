@@ -1,4 +1,4 @@
-FROM sharelatex/sharelatex:2.3.0
+FROM sharelatex/sharelatex:2.7.1
 
 
 # Patch: Fixes NPE when invoking synctex (https://github.com/overleaf/overleaf/issues/756)

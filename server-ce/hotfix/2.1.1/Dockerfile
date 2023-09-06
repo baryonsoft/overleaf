@@ -1,4 +1,4 @@
-FROM sharelatex/sharelatex:2.1.0
+FROM sharelatex/sharelatex:2.7.1
 
 # Patch: defines recaptcha config to fix share-related issues
 # - https://github.com/overleaf/overleaf/issues/684
