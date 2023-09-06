@@ -23,7 +23,7 @@ RUN make package \
       -name 'writelatex-git-bridge*jar-with-dependencies.jar' \
       -exec mv {} /git-bridge.jar \;
 
-FROM openjdk:11-jre
+FROM openjdk:11.0.16-jre
 
 RUN apt-get update && apt-get install -y git sqlite3 procps htop net-tools sockstat libjemalloc2 \
  && rm -rf /var/lib/apt/lists
