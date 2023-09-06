@@ -15,7 +15,6 @@
   ],
   "enabledManagers": [
     "npm",
-    "dockerfile",
   ],
   "ignoreDeps": [
   ],
