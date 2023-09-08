@@ -17,6 +17,7 @@
     "npm",
   ],
   "ignoreDeps": [
+    "aws-sdk"
   ],
   "packageRules": [
     {
