@@ -1,82 +1,78 @@
 import { EditorView } from '@codemirror/view'
-import { EditorSelection, Prec } from '@codemirror/state'
-import { ancestorNodeOfType } from '../../utils/tree-query'
+import { Prec } from '@codemirror/state'
+import {
+  insertPastedContent,
+  pastedContent,
+  storePastedContent,
+} from './pasted-content'
 
-export const pasteHtml = Prec.highest(
-  EditorView.domEventHandlers({
-    paste(event, view) {
-      const { clipboardData } = event
+export const pasteHtml = [
+  Prec.highest(
+    EditorView.domEventHandlers({
+      paste(event, view) {
+        const { clipboardData } = event
 
-      if (!clipboardData) {
-        return false
-      }
-
-      // allow pasting an image to create a figure
-      if (clipboardData.files.length > 0) {
-        return false
-      }
-
-      // only handle pasted HTML
-      if (!clipboardData.types.includes('text/html')) {
-        return false
-      }
-
-      // ignore text/html from VS Code
-      if (
-        clipboardData.types.includes('application/vnd.code.copymetadata') ||
-        clipboardData.types.includes('vscode-editor-data')
-      ) {
-        return false
-      }
-
-      const html = clipboardData.getData('text/html').trim()
-      const text = clipboardData.getData('text/plain').trim()
-
-      if (html.length === 0) {
-        return false
-      }
-
-      // convert the HTML to LaTeX
-      try {
-        const parser = new DOMParser()
-        const { documentElement } = parser.parseFromString(html, 'text/html')
-
-        // if the only content is in a code block, use the plain text version
-        if (onlyCode(documentElement)) {
+        if (!clipboardData) {
           return false
         }
 
-        const latex = htmlToLaTeX(documentElement)
+        // allow pasting an image to create a figure
+        if (clipboardData.files.length > 0) {
+          return false
+        }
 
-        view.dispatch(
-          view.state.changeByRange(range => {
-            // avoid pasting formatted content into a math container
-            if (
-              ancestorNodeOfType(view.state, range.anchor, '$MathContainer')
-            ) {
-              return {
-                range: EditorSelection.cursor(range.from + text.length),
-                changes: { from: range.from, to: range.to, insert: text },
-              }
-            }
+        // only handle pasted HTML
+        if (!clipboardData.types.includes('text/html')) {
+          return false
+        }
 
-            return {
-              range: EditorSelection.cursor(range.from + latex.length),
-              changes: { from: range.from, to: range.to, insert: latex },
-            }
-          })
-        )
+        // ignore text/html from VS Code
+        if (
+          clipboardData.types.includes('application/vnd.code.copymetadata') ||
+          clipboardData.types.includes('vscode-editor-data')
+        ) {
+          return false
+        }
 
-        return true
-      } catch (error) {
-        console.error(error)
+        const html = clipboardData.getData('text/html').trim()
+        const text = clipboardData.getData('text/plain').trim()
 
-        // fall back to the default paste handler
-        return false
-      }
-    },
-  })
-)
+        if (html.length === 0) {
+          return false
+        }
+
+        // convert the HTML to LaTeX
+        try {
+          const parser = new DOMParser()
+          const { documentElement } = parser.parseFromString(html, 'text/html')
+
+          // if the only content is in a code block, use the plain text version
+          if (onlyCode(documentElement)) {
+            return false
+          }
+
+          const latex = htmlToLaTeX(documentElement)
+
+          // if there's no formatting, use the plain text version
+          if (latex === text) {
+            return false
+          }
+
+          view.dispatch(insertPastedContent(view, { latex, text }))
+          view.dispatch(storePastedContent({ latex, text }, true))
+
+          return true
+        } catch (error) {
+          console.error(error)
+
+          // fall back to the default paste handler
+          return false
+        }
+      },
+    })
+  ),
+  pastedContent,
+]
 
 const removeUnwantedElements = (
   documentElement: HTMLElement,
@@ -103,6 +99,9 @@ const htmlToLaTeX = (documentElement: HTMLElement) => {
   // pre-process table elements
   processTables(documentElement)
 
+  // protect special characters in non-LaTeX text nodes
+  protectSpecialCharacters(documentElement)
+
   processMatchedElements(documentElement)
 
   const text = documentElement.textContent
@@ -124,6 +123,49 @@ const processWhitespace = (documentElement: HTMLElement) => {
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     if (node.textContent === ' ') {
       node.textContent = ' '
+    }
+  }
+}
+
+const isElementNode = (node: Node): node is HTMLElement =>
+  node.nodeType === Node.ELEMENT_NODE
+
+// TODO: negative lookbehind once Safari supports it
+const specialCharacterRegExp = /(^|[^\\])([#$%&~_^\\{}])/g
+
+const specialCharacterReplacer = (
+  _match: string,
+  prefix: string,
+  char: string
+) => {
+  if (char === '\\') {
+    // convert `\` to `\textbackslash{}`, preserving subsequent whitespace
+    char = 'textbackslash{}'
+  }
+
+  return `${prefix}\\${char}`
+}
+
+const protectSpecialCharacters = (documentElement: HTMLElement) => {
+  const walker = document.createTreeWalker(
+    documentElement,
+    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+    node =>
+      isElementNode(node) && node.tagName === 'CODE'
+        ? NodeFilter.FILTER_REJECT
+        : NodeFilter.FILTER_ACCEPT
+  )
+
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent
+      if (text) {
+        // replace non-backslash-prefixed characters
+        node.textContent = text.replaceAll(
+          specialCharacterRegExp,
+          specialCharacterReplacer
+        )
+      }
     }
   }
 }
@@ -187,8 +229,57 @@ const processTables = (element: HTMLElement) => {
 
     // move the table into the container
     container.append(table)
+
+    // add empty cells to account for rowspan
+    for (const cell of table.querySelectorAll<HTMLTableCellElement>(
+      'th[rowspan],td[rowspan]'
+    )) {
+      const rowspan = Number(cell.getAttribute('rowspan') || '1')
+      const colspan = Number(cell.getAttribute('colspan') || '1')
+
+      let row: HTMLTableRowElement | null = cell.closest('tr')
+      if (row) {
+        let position = 0
+        for (const child of row.cells) {
+          if (child === cell) {
+            break
+          }
+          position += Number(child.getAttribute('colspan') || '1')
+        }
+        for (let i = 1; i < rowspan; i++) {
+          const nextElement: Element | null = row?.nextElementSibling
+          if (!isTableRow(nextElement)) {
+            break
+          }
+          row = nextElement
+
+          let targetCell: HTMLTableCellElement | undefined
+          let targetPosition = 0
+          for (const child of row.cells) {
+            if (targetPosition === position) {
+              targetCell = child
+              break
+            }
+            targetPosition += Number(child.getAttribute('colspan') || '1')
+          }
+
+          const fillerCells = Array.from({ length: colspan }, () =>
+            document.createElement('td')
+          )
+
+          if (targetCell) {
+            targetCell.before(...fillerCells)
+          } else {
+            row.append(...fillerCells)
+          }
+        }
+      }
+    }
   }
 }
+
+const isTableRow = (element: Element | null): element is HTMLTableRowElement =>
+  element?.tagName === 'TR'
 
 const cellAlignment = new Map([
   ['left', 'l'],
@@ -328,9 +419,15 @@ const nextRowHasBorderStyle = (
 }
 
 const startMulticolumn = (element: HTMLTableCellElement): string => {
-  const colspan = element.getAttribute('colspan') ?? 1
+  const colspan = Number(element.getAttribute('colspan') || 1)
   const alignment = cellAlignment.get(element.style.textAlign) ?? 'l'
-  return `\\multicolumn{${Number(colspan)}}{${alignment}}{`
+  return `\\multicolumn{${colspan}}{${alignment}}{`
+}
+
+const startMultirow = (element: HTMLTableCellElement): string => {
+  const rowspan = Number(element.getAttribute('rowspan') || 1)
+  // NOTE: it would be useful to read cell width if specified, using `*` as a starting point
+  return `\\multirow{${rowspan}}{*}{`
 }
 
 const selectors = [
@@ -346,7 +443,7 @@ const selectors = [
   createSelector({
     selector: '*',
     match: element =>
-      parseInt(element.style.fontWeight) > 400 && hasContent(element),
+      parseInt(element.style.fontWeight) >= 700 && hasContent(element),
     start: () => '\\textbf{',
     end: () => '}',
     inside: true,
@@ -497,25 +594,30 @@ const selectors = [
     },
   }),
   createSelector({
-    selector: 'tr > td:not(:last-child), tr > th:not(:last-child)',
+    selector: 'tr > td, tr > th',
     start: (element: HTMLTableCellElement) => {
-      const colspan = element.getAttribute('colspan')
-      return colspan ? startMulticolumn(element) : ''
+      let output = ''
+      if (element.getAttribute('colspan')) {
+        output += startMulticolumn(element)
+      }
+      // NOTE: multirow is nested inside multicolumn
+      if (element.getAttribute('rowspan')) {
+        output += startMultirow(element)
+      }
+      return output
     },
     end: element => {
-      const colspan = element.getAttribute('colspan')
-      return colspan ? `} & ` : ` & `
-    },
-  }),
-  createSelector({
-    selector: 'tr > td:last-child, tr > th:last-child',
-    start: (element: HTMLTableCellElement) => {
-      const colspan = element.getAttribute('colspan')
-      return colspan ? startMulticolumn(element) : ''
-    },
-    end: element => {
-      const colspan = element.getAttribute('colspan')
-      return colspan ? `} \\\\` : ` \\\\`
+      let output = ''
+      // NOTE: multirow is nested inside multicolumn
+      if (element.getAttribute('rowspan')) {
+        output += '}'
+      }
+      if (element.getAttribute('colspan')) {
+        output += '}'
+      }
+      const row = element.parentElement as HTMLTableRowElement
+      const isLastChild = row.cells.item(row.cells.length - 1) === element
+      return output + (isLastChild ? ' \\\\' : ' & ')
     },
   }),
   createSelector({
@@ -539,8 +641,24 @@ const selectors = [
   }),
   createSelector({
     selector: 'p',
-    match: element =>
-      element.nextElementSibling?.nodeName === 'P' && hasContent(element),
+    match: element => {
+      // must have content
+      if (!hasContent(element)) {
+        return false
+      }
+
+      // inside lists and tables, must precede another paragraph
+      if (element.closest('li') || element.closest('table')) {
+        return element.nextElementSibling?.nodeName === 'P'
+      }
+
+      return true
+    },
     end: () => '\n\n',
+  }),
+  createSelector({
+    selector: 'blockquote',
+    start: () => `\n\n\\begin{quote}\n`,
+    end: () => `\n\\end{quote}\n\n`,
   }),
 ]

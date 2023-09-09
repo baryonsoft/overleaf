@@ -161,7 +161,7 @@ describe('<CodeMirrorEditor/> paste HTML in Visual mode', function () {
     )
   })
 
-  it('handles a pasted table with merged cells', function () {
+  it('handles a pasted table with merged columns', function () {
     mountEditor()
 
     const data = [
@@ -179,6 +179,48 @@ describe('<CodeMirrorEditor/> paste HTML in Visual mode', function () {
     cy.get('@content').should(
       'have.text',
       '\\begin{tabular}{l l l}test & test & test ↩\\multicolumn{2}{l}{test} & test ↩test & \\multicolumn{2}{r}{test} ↩\\end{tabular}'
+    )
+  })
+
+  it('handles a pasted table with merged rows', function () {
+    mountEditor()
+
+    const data = [
+      `<table><tbody>`,
+      `<tr><td>test</td><td>test</td><td>test</td></tr>`,
+      `<tr><td rowspan="2">test</td><td>test</td><td>test</td></tr>`,
+      `<tr><td>test</td><td>test</td></tr>`,
+      `</tbody></table>`,
+    ].join('')
+
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/html', data)
+    cy.get('@content').trigger('paste', { clipboardData })
+
+    cy.get('@content').should(
+      'have.text',
+      '\\begin{tabular}{l l l}test & test & test ↩\\multirow{2}{*}{test} & test & test ↩ & test & test ↩\\end{tabular}'
+    )
+  })
+
+  it('handles a pasted table with merged rows and columns', function () {
+    mountEditor()
+
+    const data = [
+      `<table><tbody>`,
+      `<tr><td colspan="2" rowspan="2">test</td><td>test</td></tr>`,
+      `<tr><td>test</td></tr>`,
+      `<tr><td>test</td><td>test</td><td>test</td></tr>`,
+      `</tbody></table>`,
+    ].join('')
+
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/html', data)
+    cy.get('@content').trigger('paste', { clipboardData })
+
+    cy.get('@content').should(
+      'have.text',
+      '\\begin{tabular}{l l l}\\multicolumn{2}{l}{\\multirow{2}{*}{test}} & test ↩ &  & test ↩test & test & test ↩\\end{tabular}'
     )
   })
 
@@ -249,6 +291,67 @@ describe('<CodeMirrorEditor/> paste HTML in Visual mode', function () {
       'have.text',
       'test \\begin{verbatim}foo\\end{verbatim} test'
     )
+  })
+
+  it('handles a pasted blockquote', function () {
+    mountEditor()
+
+    const data = 'test <blockquote>foo</blockquote> test'
+
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/html', data)
+    cy.get('@content').trigger('paste', { clipboardData })
+
+    cy.get('@content').should('have.text', 'test foo test')
+    cy.get('.ol-cm-environment-quote').should('have.length', 5)
+
+    cy.get('.cm-line').eq(2).click()
+    cy.get('@content').should(
+      'have.text',
+      'test \\begin{quote}foo\\end{quote} test'
+    )
+  })
+
+  it('handles pasted paragraphs', function () {
+    mountEditor()
+
+    const data = [
+      'test',
+      '<p>foo</p>',
+      '<p>bar</p>',
+      '<p>baz</p>',
+      'test',
+    ].join('\n')
+
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/html', data)
+    cy.get('@content').trigger('paste', { clipboardData })
+
+    cy.get('@content').should('have.text', 'testfoobarbaztest')
+    cy.get('.cm-line').should('have.length', 8)
+  })
+
+  it('handles pasted paragraphs in list items and table cells', function () {
+    mountEditor()
+
+    const data = [
+      'test',
+      '<p>foo</p><p>bar</p><p>baz</p>',
+      '<ul><li><p>foo</p></li></ul>',
+      '<ol><li><p>foo</p></li></ol>',
+      '<table><tbody><tr><td><p>foo</p></td></tr></tbody></table>',
+      'test',
+    ].join('\n')
+
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/html', data)
+    cy.get('@content').trigger('paste', { clipboardData })
+
+    cy.get('@content').should(
+      'have.text',
+      'testfoobarbaz foo foo\\begin{tabular}{l}foo ↩\\end{tabular}test'
+    )
+    cy.get('.cm-line').should('have.length', 17)
   })
 
   it('handles pasted inline code', function () {
@@ -343,5 +446,38 @@ describe('<CodeMirrorEditor/> paste HTML in Visual mode', function () {
 
     cy.get('@content').should('have.text', 'foo')
     cy.get('.ol-cm-command-textbf').should('have.length', 0)
+  })
+
+  it('protects special characters', function () {
+    mountEditor()
+
+    const data = 'foo & bar~baz'
+
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/html', data)
+    cy.get('@content').trigger('paste', { clipboardData })
+
+    cy.get('@content').should('have.text', 'foo & bar~baz')
+    cy.get('.ol-cm-character').should('have.length', 2)
+  })
+
+  it('does not protect special characters in code blocks', function () {
+    mountEditor()
+
+    const data = 'foo & bar~baz <code>\\textbf{foo}</code>'
+
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/html', data)
+    cy.get('@content').trigger('paste', { clipboardData })
+
+    cy.get('@content').should(
+      'have.text',
+      'foo & bar~baz \\verb|\\textbf{foo}|'
+    )
+
+    cy.get('.cm-line').eq(0).type('{Enter}')
+    cy.get('@content').should('have.text', 'foo & bar~baz \\textbf{foo}')
+    cy.get('.ol-cm-character').should('have.length', 2)
+    cy.get('.ol-cm-command-verb').should('have.length', 1)
   })
 })

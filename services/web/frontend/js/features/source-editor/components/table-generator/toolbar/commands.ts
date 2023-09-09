@@ -71,7 +71,9 @@ export const setBorders = (
       ],
     })
   } else if (theme === BorderTheme.FULLY_BORDERED) {
-    const newSpec = addColumnBordersToSpecification(specification)
+    const newSpec = generateColumnSpecification(
+      addColumnBordersToSpecification(table.columns)
+    )
 
     const insertColumns = view.state.changes({
       from: positions.columnDeclarations.from,
@@ -110,14 +112,14 @@ export const setBorders = (
     for (const row of table.rows) {
       for (const cell of row.cells) {
         if (cell.multiColumn) {
-          const specification = view.state.sliceDoc(
-            cell.multiColumn.columns.from,
-            cell.multiColumn.columns.to
-          )
           addMulticolumnBorders.push({
             from: cell.multiColumn.columns.from,
             to: cell.multiColumn.columns.to,
-            insert: addColumnBordersToSpecification(specification),
+            insert: generateColumnSpecification(
+              addColumnBordersToSpecification(
+                cell.multiColumn.columns.specification
+              )
+            ),
           })
         }
       }
@@ -129,24 +131,13 @@ export const setBorders = (
   }
 }
 
-const addColumnBordersToSpecification = (specification: string) => {
-  let newSpec = '|'
-  let consumingBrackets = 0
-  for (const char of specification) {
-    if (char === '{') {
-      consumingBrackets++
-    }
-    if (char === '}' && consumingBrackets > 0) {
-      consumingBrackets--
-    }
-    if (consumingBrackets) {
-      newSpec += char
-    }
-    if (char === '|') {
-      continue
-    }
-    newSpec += char + '|'
-  }
+const addColumnBordersToSpecification = (specification: ColumnDefinition[]) => {
+  const newSpec = specification.map(column => ({
+    ...column,
+    borderLeft: 1,
+    borderRight: 0,
+  }))
+  newSpec[newSpec.length - 1].borderRight = 1
   return newSpec
 }
 
@@ -216,8 +207,18 @@ export const setAlignment = (
 const generateColumnSpecification = (columns: ColumnDefinition[]) => {
   return columns
     .map(
-      ({ borderLeft, borderRight, content }) =>
-        `${'|'.repeat(borderLeft)}${content}${'|'.repeat(borderRight)}`
+      ({
+        borderLeft,
+        borderRight,
+        content,
+        cellSpacingLeft,
+        cellSpacingRight,
+      }) =>
+        `${'|'.repeat(
+          borderLeft
+        )}${cellSpacingLeft}${content}${cellSpacingRight}${'|'.repeat(
+          borderRight
+        )}`
     )
     .join('')
 }
@@ -253,6 +254,8 @@ export const removeRowOrColumns = (
   const removedColumns =
     Number(selection.isColumnSelected(startCell, table)) * selection.width()
 
+  const removingFromBeginning = selection.isColumnSelected(0, table)
+
   for (let row = startRow; row <= endRow; row++) {
     if (selection.isRowSelected(row, table)) {
       const rowPosition = positions.rowPositions[row]
@@ -267,19 +270,29 @@ export const removeRowOrColumns = (
         const cellPosition = positions.cells[row][cellIndex]
         if (selection.isColumnSelected(cell, table)) {
           // We should remove this column.
-          const boundaries = table.getCellBoundaries(row, cell)
-          if (boundaries.from === 0 && cellSeparators[row].length > 0) {
-            // Remove the cell separator between the first and second cell
+          if (removingFromBeginning) {
+            // Deletes content in { }
+            // [ cell x - 1 ] & { [ cell x ] & } [ cell x + 1 ]
+            const from = cellPosition.from
+            const to = cellSeparators[row][cellIndex].to
+            if (from === undefined || to === undefined) {
+              console.error('Failed to remove column')
+              return selection
+            }
             changes.push({
-              from: positions.cells[row][cell].from,
-              to: cellSeparators[row][0].to,
+              from,
+              to,
               insert: '',
             })
           } else {
-            // Remove the cell separator between the cell before and this if possible
-            const from =
-              cellSeparators[row][cellIndex - 1]?.from ?? cellPosition.from
+            // Deletes content in { }
+            // [ cell x - 1 ] { &  [ cell x ] } & [ cell x + 1 ]
+            const from = cellSeparators[row][cellIndex - 1].from
             const to = cellPosition.to
+            if (from === undefined || to === undefined) {
+              console.error('Failed to remove column')
+              return selection
+            }
             changes.push({
               from,
               to,
@@ -294,6 +307,13 @@ export const removeRowOrColumns = (
   const filteredColumns = columnSpecification.filter(
     (_, i) => !selection.isColumnSelected(i, table)
   )
+  if (
+    table.getBorderTheme() === BorderTheme.FULLY_BORDERED &&
+    columnSpecification[0]?.borderLeft > 0 &&
+    filteredColumns.length
+  ) {
+    filteredColumns[0].borderLeft = Math.max(1, filteredColumns[0].borderLeft)
+  }
   const newSpecification = generateColumnSpecification(filteredColumns)
   changes.push({
     from: positions.columnDeclarations.from,
@@ -408,6 +428,8 @@ export const insertColumn = (
       borderLeft: 0,
       borderRight,
       content: 'l',
+      cellSpacingLeft: '',
+      cellSpacingRight: '',
     }))
   )
   if (targetIndex === 0 && borderTheme === BorderTheme.FULLY_BORDERED) {

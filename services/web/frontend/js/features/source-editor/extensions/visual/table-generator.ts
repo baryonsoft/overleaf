@@ -1,7 +1,7 @@
 import { EditorView } from '@codemirror/view'
 
 export const tableGeneratorTheme = EditorView.baseTheme({
-  '&dark .table-generator': {
+  '&dark .table-generator-container': {
     '--table-generator-active-border-color': '#ccc',
     '--table-generator-coming-soon-background-color': '#41464f',
     '--table-generator-coming-soon-color': '#fff',
@@ -23,6 +23,7 @@ export const tableGeneratorTheme = EditorView.baseTheme({
       'rgba(125,125,125,0.3)',
     '--table-generator-toolbar-dropdown-disabled-color': '#999',
     '--table-generator-toolbar-shadow-color': '#1e253029',
+    '--table-generator-error-background': '#F1F4F9',
   },
 
   '&light .table-generator': {
@@ -46,6 +47,7 @@ export const tableGeneratorTheme = EditorView.baseTheme({
     '--table-generator-toolbar-dropdown-disabled-background': '#f2f2f2',
     '--table-generator-toolbar-dropdown-disabled-color': 'var(--neutral-40)',
     '--table-generator-toolbar-shadow-color': '#1e253029',
+    '--table-generator-error-background': '#F1F4F9',
   },
 
   '.table-generator': {
@@ -111,17 +113,21 @@ export const tableGeneratorTheme = EditorView.baseTheme({
       'border-bottom-color': 'var(--table-generator-active-border-color)',
       'border-bottom-width': 'var(--table-generator-active-border-width)',
     },
+    'overflow-x': 'auto',
+    'overflow-y': 'hidden',
   },
 
   '.table-generator-table': {
     'table-layout': 'fixed',
-    'max-width': '80%',
+    'max-width': '95%',
     margin: '0 auto',
     cursor: 'default',
 
     '& td': {
-      padding: '0 0.25em',
-      'max-width': '200px',
+      '&:not(.editing)': {
+        padding: '0 0.25em',
+      },
+      'vertical-align': 'top',
 
       '&.alignment-left': {
         'text-align': 'left',
@@ -185,18 +191,23 @@ export const tableGeneratorTheme = EditorView.baseTheme({
 
   '.table-generator-floating-toolbar': {
     position: 'absolute',
-    top: '-36px',
+    top: '0',
+    transform: 'translateY(-100%)',
     left: '0',
     right: '0',
     margin: '0 auto',
-    'z-index': '1',
+    // z-index of cursor layer is 150
+    'z-index': '152',
     'border-radius': '4px',
     width: 'max-content',
+    'justify-content': 'start',
+    maxWidth: '100%',
     'background-color': 'var(--table-generator-toolbar-background)',
     'box-shadow': '0px 2px 4px 0px var(--table-generator-toolbar-shadow-color)',
     padding: '4px',
-    height: '40px',
     display: 'flex',
+    flexWrap: 'wrap',
+    rowGap: '8px',
   },
 
   '.table-generator-toolbar-button': {
@@ -246,16 +257,20 @@ export const tableGeneratorTheme = EditorView.baseTheme({
     },
   },
 
+  '.toolbar-beta-badge': {
+    padding: '0 4px 2px 12px',
+  },
+
   '.table-generator-button-group': {
     display: 'inline-flex',
     'align-items': 'center',
     'justify-content': 'center',
     'line-height': '1',
     overflow: 'hidden',
-    '&:not(:first-child)': {
-      'border-left': '1px solid var(--table-generator-divider-color)',
-      'padding-left': '8px',
-      'margin-left': '8px',
+    '&:not(:last-child)': {
+      'border-right': '1px solid var(--table-generator-divider-color)',
+      'padding-right': '8px',
+      'margin-right': '8px',
     },
   },
 
@@ -274,15 +289,20 @@ export const tableGeneratorTheme = EditorView.baseTheme({
   },
 
   '.table-generator-cell-input': {
-    'max-width': 'calc(200px - 0.5em)',
     'background-color': 'transparent',
     width: '100%',
+    'text-align': 'inherit',
     height: '1.5em',
+    'min-height': '100%',
     border: '1px solid var(--table-generator-toolbar-shadow-color)',
-    padding: '0',
+    padding: '0 0.25em',
     resize: 'none',
     'box-sizing': 'border-box',
     overflow: 'hidden',
+    '&:focus, &:focus-visible': {
+      outline: '2px solid var(--table-generator-focus-border-color)',
+      'outline-offset': '-2px',
+    },
   },
 
   '.table-generator-border-options-coming-soon': {
@@ -317,6 +337,7 @@ export const tableGeneratorTheme = EditorView.baseTheme({
     'align-items': 'center',
     'justify-content': 'space-between',
     'font-family': 'Lato',
+    height: '36px',
 
     '&:not(:first-child)': {
       'margin-left': '8px',
@@ -401,20 +422,31 @@ export const tableGeneratorTheme = EditorView.baseTheme({
     },
   },
 
+  '.ol-cm-environment-table.table-generator-error-container, .ol-cm-environment-table.ol-cm-tabular':
+    {
+      background: 'rgba(125, 125, 125, 0.05)',
+    },
+
   '.table-generator-error': {
-    background:
-      'linear-gradient(0deg, #f9f1f1, #f9f1f1), linear-gradient(0deg, #f5beba, #f5beba)',
+    background: 'var(--table-generator-error-background)',
     display: 'flex',
     'justify-content': 'space-between',
     color: 'black',
-    border: '1px solid #f5beba',
+    border: '1px solid #C3D0E3',
     'font-family': 'Lato',
-    'margin-bottom': '0',
+    margin: '0 16px 0 16px',
     '& .table-generator-error-message': {
-      flex: '1 0 auto',
+      flex: '1 1 auto',
+    },
+    '& .table-generator-error-message-header': {
+      fontWeight: 'bold',
+      marginBottom: '2px',
+    },
+    '& .table-generator-error-show-code-button': {
+      alignSelf: 'baseline',
     },
     '& .table-generator-error-icon': {
-      color: '#b83a33',
+      color: '#3265B2',
       'margin-right': '12px',
     },
   },

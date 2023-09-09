@@ -45,6 +45,7 @@ import { EnvironmentLineWidget } from './visual-widgets/environment-line'
 import {
   ListEnvironmentName,
   ancestorOfNodeWithType,
+  isDirectChildOfEnvironment,
 } from '../../utils/tree-operations/ancestors'
 import { InlineGraphicsWidget } from './visual-widgets/inline-graphics'
 import getMeta from '../../../../utils/meta'
@@ -65,6 +66,7 @@ import { IndicatorWidget } from './visual-widgets/indicator'
 import { TabularWidget } from './visual-widgets/tabular'
 import { nextSnippetField, pickedCompletion } from '@codemirror/autocomplete'
 import { skipPreambleWithCursor } from './skip-preamble-cursor'
+import { TableRenderingErrorWidget } from './visual-widgets/table-rendering-error'
 
 type Options = {
   fileTreeManager: {
@@ -186,7 +188,14 @@ export const atomicDecorations = (options: Options) => {
     tree.iterate({
       enter(nodeRef) {
         if (nodeRef.node.type.is('Maketitle')) {
-          preamble.to = nodeRef.node.from
+          // end the preamble at \maketitle, if it's directly inside the document environment
+          const parentEnvironment = ancestorOfNodeWithType(
+            nodeRef.node,
+            '$Environment'
+          )
+          if (parentEnvironment?.type.is('DocumentEnvironment')) {
+            preamble.to = nodeRef.node.from
+          }
         } else if (nodeRef.node.type.is('DocumentEnvironment')) {
           // only count the first instance of DocumentEnvironment
           if (!seenDocumentEnvironment) {
@@ -312,24 +321,43 @@ export const atomicDecorations = (options: Options) => {
             nodeRef.type.is('TabularEnvironment')
           ) {
             if (shouldDecorate(state, nodeRef)) {
+              const tabularNode = nodeRef.node
               const tableNode = ancestorOfNodeWithType(
-                nodeRef.node,
+                tabularNode,
                 'TableEnvironment'
               )
-              decorations.push(
-                Decoration.replace({
-                  widget: new TabularWidget(
-                    nodeRef.node,
-                    state.doc.sliceString(
-                      (tableNode ?? nodeRef).from,
-                      (tableNode ?? nodeRef).to
-                    ),
-                    tableNode
-                  ),
-                  block: true,
-                }).range(nodeRef.from, nodeRef.to)
+              const directChild = isDirectChildOfEnvironment(
+                tabularNode.parent,
+                tableNode
               )
-              return false
+              const tabularWidget = new TabularWidget(
+                tabularNode,
+                state.doc.sliceString(
+                  (tableNode ?? tabularNode).from,
+                  (tableNode ?? tabularNode).to
+                ),
+                tableNode,
+                directChild,
+                state
+              )
+
+              if (tabularWidget.isValid()) {
+                decorations.push(
+                  Decoration.replace({
+                    widget: tabularWidget,
+                    block: true,
+                  }).range(nodeRef.from, nodeRef.to)
+                )
+                return false
+              } else {
+                // Show error message
+                decorations.push(
+                  Decoration.widget({
+                    widget: new TableRenderingErrorWidget(tableNode),
+                    block: true,
+                  }).range(nodeRef.from, nodeRef.from)
+                )
+              }
             }
           }
         } else if (nodeRef.type.is('BeginEnv')) {
