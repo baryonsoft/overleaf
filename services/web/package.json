@@ -244,7 +244,7 @@
     "ace-builds": "overleaf/ace-builds#v1.4.12-69aace50e6796d42116f8f96e19d2468d8a88af9",
     "acorn": "^7.1.1",
     "acorn-walk": "^7.1.1",
-    "algoliasearch": "^3.35.1",
+    "algoliasearch": "^4.0.0",
     "angular": "~1.8.0",
     "angular-mocks": "~1.8.0",
     "angular-sanitize": "~1.8.0",
