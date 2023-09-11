@@ -68,7 +68,7 @@
   "dependencies": {
     "@contentful/rich-text-html-renderer": "^16.0.2",
     "@contentful/rich-text-types": "^16.0.2",
-    "@google-cloud/bigquery": "^6.0.1",
+    "@google-cloud/bigquery": "^7.0.0",
     "@node-oauth/oauth2-server": "^4.3.0",
     "@overleaf/access-token-encryptor": "*",
     "@overleaf/fetch-utils": "*",
