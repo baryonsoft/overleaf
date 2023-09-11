@@ -26,7 +26,7 @@
     "@overleaf/o-error": "*",
     "aws-sdk": "^2.718.0",
     "fast-crc32c": "overleaf/node-fast-crc32c#aae6b2a4c7a7a159395df9cc6c38dfde702d6f51",
-    "glob": "^7.1.6",
+    "glob": "^10.0.0",
     "range-parser": "^1.2.1",
     "tiny-async-pool": "^1.1.0"
   },
