@@ -28,6 +28,12 @@
         "after 6pm on the 15th day of the month"
       ],
       "groupName": "TypeScript Definitions"
+    },
+    {
+      "matchPackagePatterns": [
+        "@opentelemetry/*"
+      ],
+      "enabled": false
     }
   ],
   "pin": {
