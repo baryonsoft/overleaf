@@ -269,7 +269,7 @@
     "css-minimizer-webpack-plugin": "^5.0.0",
     "cypress": "12.17.1",
     "cypress-plugin-tab": "^1.0.5",
-    "d3": "^3.5.16",
+    "d3": "^7.0.0",
     "daterangepicker": "overleaf/daterangepicker#e496d2d44ca53e208c930e4cb4bcf29bcefa4550",
     "downshift": "^6.1.0",
     "es6-promise": "^4.2.8",
