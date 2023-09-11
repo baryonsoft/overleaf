@@ -31,7 +31,8 @@
     },
     {
       "matchPackagePatterns": [
-        "@opentelemetry/*"
+        "@opentelemetry/*",
+        "@google-cloud/*",
       ],
       "enabled": false
     }
