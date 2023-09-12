@@ -25,6 +25,6 @@
     "@overleaf/o-error": "*",
     "check-types": "^5.1.0",
     "lodash": "^4.17.19",
-    "p-map": "^4.0.0"
+    "p-map": "^6.0.0"
   }
 }
