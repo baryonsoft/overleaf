@@ -16,7 +16,9 @@
     "npm",
   ],
   "ignoreDeps": [
-    "aws-sdk"
+    "aws-sdk",
+    "dateformat",
+    "celebrate",
   ],
   "packageRules": [
     {
@@ -40,8 +42,7 @@
     "enabled": false
   },
   "lockFileMaintenance": {
-    "enabled": true,
-    "automerge": true
+    "enabled": false
   },
   "automergeType": "branch",
   "prConcurrentLimit": 10,
