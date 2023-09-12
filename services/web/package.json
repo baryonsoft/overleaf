@@ -137,7 +137,7 @@
     "nodemailer-ses-transport": "^1.5.1",
     "otplib": "^12.0.1",
     "p-limit": "^2.3.0",
-    "parse-data-url": "^2.0.0",
+    "parse-data-url": "^6.0.0",
     "passport": "^0.4.1",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
