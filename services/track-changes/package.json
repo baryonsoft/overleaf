@@ -33,7 +33,7 @@
     "line-reader": "^0.4.0",
     "lodash": "^4.17.21",
     "mongo-uri": "^0.1.2",
-    "mongodb": "^3.6.0",
+    "mongodb": "^6.0.0",
     "redis": "~0.10.1",
     "request": "~2.88.2",
     "requestretry": "^7.1.0",

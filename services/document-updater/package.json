@@ -28,7 +28,7 @@
     "diff-match-patch": "overleaf/diff-match-patch#89805f9c671a77a263fc53461acd62aa7498f688",
     "express": "^4.18.2",
     "lodash": "^4.17.21",
-    "mongodb": "^4.11.0",
+    "mongodb": "^6.0.0",
     "request": "^2.88.2",
     "requestretry": "^7.1.0"
   },
