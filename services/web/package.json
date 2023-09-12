@@ -115,7 +115,7 @@
     "i18next-fs-backend": "^2.0.0",
     "i18next-http-middleware": "^3.0.2",
     "jose": "^4.3.8",
-    "json2csv": "^4.3.3",
+    "json2csv": "^5.0.0",
     "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.19",
     "lru-cache": "^7.10.1",
