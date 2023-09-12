@@ -40,7 +40,7 @@
     "mongo-uri": "^0.1.2",
     "mongodb": "^4.11.0",
     "overleaf-editor-core": "*",
-    "redis": "~0.10.1",
+    "redis": "~4.6.0",
     "request": "^2.88.2",
     "requestretry": "^7.1.0"
   },
