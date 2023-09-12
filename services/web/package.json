@@ -213,7 +213,7 @@
     "@replit/codemirror-indentation-markers": "overleaf/codemirror-indentation-markers#1b1f93c0bcd04293aea6986aa2275185b2c56803",
     "@replit/codemirror-vim": "overleaf/codemirror-vim#07f1b50f4b2e703792da75a29e9e1e479b6b7067",
     "@sentry/browser": "^7.8.1",
-    "@testing-library/cypress": "^9.0.0",
+    "@testing-library/cypress": "^10.0.0",
     "@testing-library/dom": "^9.0.0",
     "@testing-library/react": "^12.1.5",
     "@testing-library/react-hooks": "^8.0.1",
