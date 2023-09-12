@@ -290,7 +290,7 @@
     "i18next-scanner": "^4.3.0",
     "isomorphic-unfetch": "^3.0.0",
     "jquery": "^2.2.4",
-    "jsdom": "^19.0.0",
+    "jsdom": "^22.0.0",
     "jsdom-global": "^3.0.2",
     "karma": "^6.3.17",
     "karma-chai-sinon": "^0.1.5",
