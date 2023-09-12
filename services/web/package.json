@@ -111,7 +111,7 @@
     "fuse.js": "^3.0.0",
     "globby": "^5.0.0",
     "helmet": "^6.0.1",
-    "i18next": "^19.6.3",
+    "i18next": "^23.0.0",
     "i18next-fs-backend": "^2.0.0",
     "i18next-http-middleware": "^3.0.2",
     "jose": "^4.3.8",
