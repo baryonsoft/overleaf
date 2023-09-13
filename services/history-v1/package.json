@@ -34,7 +34,7 @@
     "pg": "^8.7.1",
     "swagger-tools": "^0.10.4",
     "temp": "^0.9.0",
-    "throng": "^4.0.0",
+    "throng": "^5.0.0",
     "tsscmp": "^1.0.6",
     "utf-8-validate": "^6.0.0"
   },
