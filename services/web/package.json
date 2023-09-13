@@ -351,6 +351,6 @@
     "webpack-dev-server": "^4.15.0",
     "webpack-merge": "^5.8.0",
     "worker-loader": "^3.0.8",
-    "yup": "^0.32.11"
+    "yup": "^1.0.0"
   }
 }
