@@ -31,7 +31,7 @@
     "lodash.once": "^4.1.1",
     "node-fetch": "^2.6.7",
     "range-parser": "^1.2.1",
-    "tiny-async-pool": "^1.1.0"
+    "tiny-async-pool": "^2.0.0"
   },
   "devDependencies": {
     "@google-cloud/storage": "^6.10.1",
