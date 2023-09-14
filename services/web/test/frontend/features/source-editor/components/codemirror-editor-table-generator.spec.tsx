@@ -109,6 +109,7 @@ describe('<CodeMirrorEditor/> Table editor', function () {
     cy.interceptEvents()
     cy.interceptSpelling()
     cy.interceptMathJax()
+    cy.interceptCompile('compile', Number.MAX_SAFE_INTEGER)
     window.metaAttributesCache.set('ol-preventCompileOnLoad', true)
     window.metaAttributesCache.set('ol-splitTestVariants', {
       'table-generator': 'enabled',
@@ -223,7 +224,11 @@ cell 3 & cell 4 \\\\
         .click()
 
       cy.get('.table-generator-floating-toolbar').as('toolbar').should('exist')
-      cy.get('@toolbar').findByLabelText('Alignment').should('be.disabled')
+      cy.get('@toolbar')
+        .findByLabelText('Alignment')
+        .should('be.disabled')
+        .should('contain.text', 'format_align_center')
+
       cy.get('.column-selector').first().click()
       cy.get('@toolbar')
         .findByLabelText('Alignment')
@@ -237,6 +242,13 @@ cell 3 & cell 4 \\\\
         ['cell 1', 'cell 2'],
         ['cell 3', 'cell 4'],
       ])
+      // Check that alignment button updated to reflect the left alignment
+      cy.get('.table-generator-cell').first().click()
+      cy.get('@toolbar')
+        .findByLabelText('Alignment')
+        .should('be.disabled')
+        .should('contain.text', 'format_align_left')
+
       cy.get('.table-generator-cell')
         .eq(0)
         .should('have.class', 'alignment-left')
@@ -475,6 +487,174 @@ cell 3 & cell 4 \\\\
       cy.get('@toolbar')
         .contains('button', 'Caption above')
         .should('be.disabled')
+    })
+  })
+  describe('Tabular interactions', function () {
+    it('Can type into cells', function () {
+      mountEditor(`
+      \\begin{tabular}{cccc}
+        cell 1 & cell 2 & cell 3 & cell 4\\\\
+        cell 5 & \\multicolumn{2}{c}cell 6} & cell 7 \\\\
+      \\end{tabular}`)
+
+      cy.get('.table-generator-cell').eq(0).as('cell-1')
+      cy.get('.table-generator-cell').eq(5).as('cell-6')
+
+      // Escape should cancel editing
+      cy.get('@cell-1').type('foo{Esc}')
+      cy.get('@cell-1').should('have.text', 'cell 1')
+
+      // Enter should commit change. Direct typing should override the current contents
+      cy.get('@cell-1').type('foo{Enter}')
+      cy.get('@cell-1').should('have.text', 'foo')
+
+      // Enter should start editing at the end of current text
+      cy.get('@cell-1').type('{Enter}')
+      cy.get('@cell-1').find('textarea').should('exist')
+      cy.get('@cell-1').type('bar{Enter}')
+      cy.get('@cell-1').should('have.text', 'foobar')
+
+      // Double clicking should start editing at the end of current text
+      cy.get('@cell-1').dblclick()
+      cy.get('@cell-1').find('textarea').should('exist')
+      cy.get('@cell-1').type('baz{Enter}')
+      cy.get('@cell-1').should('have.text', 'foobarbaz')
+
+      cy.get('@cell-1').type('{Backspace}')
+      cy.get('@cell-1').should('have.text', '')
+
+      // Typing also works for multicolumn cells
+      cy.get('@cell-6').type('foo{Enter}')
+      checkTable([
+        ['', 'cell 2', 'cell 3', 'cell 4'],
+        ['cell 5', { text: 'foo', colspan: 2 }, 'cell 7'],
+      ])
+    })
+
+    it('Can paste tabular data into cells', function () {
+      mountEditor(`
+      \\begin{tabular}{cc }
+        cell 1 & cell 2\\\\
+        cell 3 & cell 4 \\\\
+      \\end{tabular}`)
+      cy.get('.table-generator-cell').eq(0).as('cell-1')
+      // TODO: Seems as cypress can't access clipboard, so we can't test copying
+      cy.get('@cell-1').click()
+      const clipboardData = new DataTransfer()
+      clipboardData.setData('text/plain', 'foo\tbar\nbaz\tqux')
+      cy.get('@cell-1').trigger('paste', { clipboardData })
+      checkTable([
+        ['foo', 'bar'],
+        ['baz', 'qux'],
+      ])
+    })
+
+    it('Can navigate cells with keyboard', function () {
+      mountEditor(`
+      \\begin{tabular}{cc }
+        cell 1 & cell 2\\\\
+        cell 3 & cell 4 \\\\
+      \\end{tabular}`)
+      cy.get('.table-generator-cell').eq(0).as('cell-1')
+      cy.get('.table-generator-cell').eq(1).as('cell-2')
+      cy.get('.table-generator-cell').eq(2).as('cell-3')
+      cy.get('.table-generator-cell').eq(3).as('cell-4')
+
+      // Arrow key navigation
+      cy.get('@cell-1').click()
+      cy.get('@cell-1').type('{rightarrow}')
+      cy.get('@cell-2').should('have.focus').should('have.class', 'selected')
+      cy.get('@cell-2').type('{leftarrow}')
+      cy.get('@cell-1').should('have.focus').should('have.class', 'selected')
+      cy.get('@cell-1').type('{downarrow}')
+      cy.get('@cell-3').should('have.focus').should('have.class', 'selected')
+      cy.get('@cell-3').type('{rightarrow}')
+      cy.get('@cell-4').should('have.focus').should('have.class', 'selected')
+      cy.get('@cell-4').type('{uparrow}')
+      cy.get('@cell-2').should('have.focus').should('have.class', 'selected')
+      cy.get('@cell-2').type('{leftarrow}')
+      cy.get('@cell-1').should('have.focus').should('have.class', 'selected')
+
+      // Tab navigation
+      cy.get('@cell-1').tab()
+      cy.get('@cell-2').should('have.focus').should('have.class', 'selected')
+      cy.get('@cell-2').tab()
+      cy.get('@cell-3').should('have.focus').should('have.class', 'selected')
+      cy.get('@cell-3').tab()
+      cy.get('@cell-4').should('have.focus').should('have.class', 'selected')
+      cy.get('@cell-4').tab({ shift: true })
+      cy.get('@cell-3').should('have.focus').should('have.class', 'selected')
+      cy.get('@cell-3').tab({ shift: true })
+      cy.get('@cell-2').should('have.focus').should('have.class', 'selected')
+      cy.get('@cell-2').tab({ shift: true })
+      cy.get('@cell-1').should('have.focus').should('have.class', 'selected')
+      // Tabbing when editing a cell should commit change and move to next cell
+      cy.get('@cell-1').type('foo')
+      cy.get('@cell-1').tab()
+      cy.get('@cell-2').should('have.focus').should('have.class', 'selected')
+      cy.get('@cell-1').should('have.text', 'foo')
+    })
+
+    it('Can select rows and columns with selectors', function () {
+      mountEditor(`
+\\begin{tabular}{cc }
+  cell 1 & cell 2\\\\
+  cell 3 & cell 4 \\\\
+\\end{tabular}`)
+      cy.get('.table-generator-cell').eq(0).as('cell-1')
+      cy.get('.table-generator-cell').eq(1).as('cell-2')
+      cy.get('.table-generator-cell').eq(2).as('cell-3')
+      cy.get('.table-generator-cell').eq(3).as('cell-4')
+
+      cy.get('.column-selector').eq(0).click()
+      cy.get('@cell-1').should('have.class', 'selected')
+      cy.get('@cell-2').should('not.have.class', 'selected')
+      cy.get('@cell-3').should('have.class', 'selected')
+      cy.get('@cell-4').should('not.have.class', 'selected')
+      cy.get('.column-selector').eq(1).click()
+      cy.get('@cell-1').should('not.have.class', 'selected')
+      cy.get('@cell-2').should('have.class', 'selected')
+      cy.get('@cell-3').should('not.have.class', 'selected')
+      cy.get('@cell-4').should('have.class', 'selected')
+      cy.get('.column-selector').eq(0).click({ shiftKey: true })
+      cy.get('@cell-1').should('have.class', 'selected')
+      cy.get('@cell-2').should('have.class', 'selected')
+      cy.get('@cell-3').should('have.class', 'selected')
+      cy.get('@cell-4').should('have.class', 'selected')
+
+      cy.get('.row-selector').eq(0).click()
+      cy.get('@cell-1').should('have.class', 'selected')
+      cy.get('@cell-2').should('have.class', 'selected')
+      cy.get('@cell-3').should('not.have.class', 'selected')
+      cy.get('@cell-4').should('not.have.class', 'selected')
+      cy.get('.row-selector').eq(1).click()
+      cy.get('@cell-1').should('not.have.class', 'selected')
+      cy.get('@cell-2').should('not.have.class', 'selected')
+      cy.get('@cell-3').should('have.class', 'selected')
+      cy.get('@cell-4').should('have.class', 'selected')
+      cy.get('.row-selector').eq(0).click({ shiftKey: true })
+      cy.get('@cell-1').should('have.class', 'selected')
+      cy.get('@cell-2').should('have.class', 'selected')
+      cy.get('@cell-3').should('have.class', 'selected')
+      cy.get('@cell-4').should('have.class', 'selected')
+    })
+
+    it('Allow compilation shortcuts to work', function () {
+      mountEditor(`
+\\begin{tabular}{cc }
+cell 1 & cell 2\\\\
+cell 3 & cell 4 \\\\
+\\end{tabular}`)
+      cy.get('.table-generator-cell').eq(0).as('cell-1').click()
+      cy.get('@cell-1').type('{ctrl}{enter}')
+      cy.wait('@compile')
+      cy.get('@cell-1').type('foo{ctrl}{enter}')
+      cy.wait('@compile')
+      cy.get('@cell-1').type('{esc}')
+      cy.get('@cell-1').type('{ctrl}{s}')
+      cy.wait('@compile')
+      cy.get('@cell-1').type('foo{ctrl}{s}')
+      cy.wait('@compile')
     })
   })
 })
