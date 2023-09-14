@@ -9,6 +9,7 @@ function BackToProjectsButton() {
     <div className="toolbar-item">
       <a
         className="btn btn-full-height"
+        draggable="false"
         href="/project"
         title="All Projects"
         onClick={() => {
