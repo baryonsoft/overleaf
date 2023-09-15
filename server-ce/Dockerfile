@@ -11,7 +11,7 @@ WORKDIR /overleaf
 # -------------------------
 ADD server-ce/genScript.js /overleaf/genScript.js
 ADD server-ce/services.js /overleaf/services.js
-ADD package.json package-lock.json /overleaf/
+ADD package.json bun.lockb package-lock.json /overleaf/
 ADD libraries/ /overleaf/libraries/
 ADD services/ /overleaf/services/
 
