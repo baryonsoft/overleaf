@@ -1,0 +1,52 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    ":disableDependencyDashboard"
+  ],
+  "reviewers": [
+    "astrowq"
+  ],
+  "schedule": [
+    "every weekend"
+  ],
+  "addLabels": [
+    "dependencies"
+  ],
+  "enabledManagers": [
+    "npm",
+  ],
+  "ignoreDeps": [
+    "aws-sdk",
+    "dateformat",
+    "celebrate",
+  ],
+  "packageRules": [
+    {
+      "matchPackagePatterns": [
+        "@types/*"
+      ],
+      "schedule": [
+        "after 6pm on the 15th day of the month"
+      ],
+      "groupName": "TypeScript Definitions"
+    },
+    {
+      "matchPackagePatterns": [
+        "@opentelemetry/*",
+        "@google-cloud/*",
+      ],
+      "enabled": false
+    }
+  ],
+  "pin": {
+    "enabled": false
+  },
+  "lockFileMaintenance": {
+    "enabled": false
+  },
+  "automergeType": "branch",
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 10,
+  "rebaseWhen": "conflicted"
+}

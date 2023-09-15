@@ -138,7 +138,6 @@ export function EditorProvider({ children, settings }) {
       parts.push('-')
     }
 
-    parts.push('Online LaTeX Editor')
     parts.push(window.ExposedSettings.appName)
 
     const title = parts.join(' ')

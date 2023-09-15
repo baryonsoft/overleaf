@@ -5,6 +5,7 @@ console.log('set -ex')
 
 switch (process.argv.pop()) {
   case 'install':
+    console.log('bun install --frozen-lockfile')
     console.log('npm ci')
     break
   case 'compile':
@@ -12,7 +13,7 @@ switch (process.argv.pop()) {
       console.log('pushd', `services/${service.name}`)
       switch (service.name) {
         case 'web':
-          console.log('npm run webpack:production')
+          console.log('bun run webpack:production')
           // drop webpack/babel cache
           console.log('rm -rf node_modules/.cache')
           break
@@ -30,5 +31,5 @@ switch (process.argv.pop()) {
 
 console.log('set +x')
 console.log(
-  'rm -rf /root/.cache /root/.npm $(find /tmp/ -mindepth 1 -maxdepth 1)'
+  'rm -rf /root/.bun/install/cache /root/.cache /root/.npm $(find /tmp/ -mindepth 1 -maxdepth 1)'
 )

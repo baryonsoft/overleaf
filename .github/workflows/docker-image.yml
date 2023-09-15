@@ -1,0 +1,63 @@
+name: Docker Image
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build-base:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build the base image
+        working-directory: server-ce
+        run: make build-base
+
+      - run: docker push ghcr.io/baryonsoft/overleaf/sharelatex-base
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build the latest image
+        working-directory: server-ce
+        run: make build-community
+
+      - name: Push image
+        run: docker push ghcr.io/baryonsoft/overleaf/sharelatex
+
+  build-full:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build the latest image with full texlive
+        working-directory: server-ce
+        run: make build-community-full
+
+      - name: Push image
+        run: docker push ghcr.io/baryonsoft/overleaf/sharelatex-full

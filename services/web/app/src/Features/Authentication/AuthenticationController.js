@@ -9,6 +9,8 @@ const querystring = require('querystring')
 const Settings = require('@overleaf/settings')
 const basicAuth = require('basic-auth')
 const tsscmp = require('tsscmp')
+const {User} = require("../../models/User");
+const UserCreator = require("../User/UserCreator");
 const UserHandler = require('../User/UserHandler')
 const UserSessionsManager = require('../User/UserSessionsManager')
 const SessionStoreManager = require('../../infrastructure/SessionStoreManager')
@@ -335,6 +337,16 @@ const AuthenticationController = {
     }
   },
 
+  requireToken() {
+    return function (req, res, next) {
+      return passport.authenticate('jwt', { session: false },
+        function (err, user, info) {
+          if (err) return next(err)
+          if (user) { req.user = user; return next() }
+        })(req, res, next)
+    }
+  },
+
   validateUserSession: function () {
     // Middleware to check that the user's session is still good on key actions,
     // such as opening a a project. Could be used to check that session has not
@@ -553,6 +565,84 @@ const AuthenticationController = {
       delete req.session.postLoginRedirect
     }
   },
+
+  oidcLogin(req, res, next) {
+    return passport.authenticate('openidconnect')(req, res, next)
+  },
+
+  oidcLoginCallback(req, res, next) {
+    return passport.authenticate('openidconnect',
+        {failureRedirect: '/login', failureMessage: true}, function (err, user) {
+          if (err) {
+            return next(err)
+          }
+          AuthenticationController.finishLogin(user, req, res, next)
+        }
+    )(req, res, next)
+  },
+
+  verifyToken(jwtPayload, done) {
+    User.findOne({ oidcUID: jwtPayload.email }, function (err, user) {
+      if (err) {
+        return done(err, false);
+      }
+      if (user) {
+        return done(null, user);
+      } else {
+        UserCreator.createNewUser({
+          holdingAccount: false,
+          email: jwtPayload.email,
+          first_name: jwtPayload.given_name,
+          last_name: jwtPayload.family_name,
+          oidcUID: jwtPayload.email
+        }, function (user) {
+          return done(null, user);
+        })
+        return done(null, false);
+      }
+    });
+  },
+
+  verifyOpenIDConnect(issuer, profile, callback) {
+      User.findOne({oidcUID: profile.username}, (err, user) => {
+        if (err) {
+          return callback(err);
+        }
+        if (!user) {
+          UserCreator.createNewUser({
+            holdingAccount: false,
+            email: profile.emails[0].value,
+            first_name: profile.name.givenName,
+            last_name: profile.name.familyName,
+            oidcUID: profile.username
+          }, function (user) {
+            return callback(null, user);
+          })
+        } else {
+          user.first_name = profile.name.givenName;
+          user.last_name = profile.name.familyName;
+          user.oidcUID = profile.username;
+          if (user.email !== profile.emails[0].value) {
+            user.email = profile.emails[0].value;
+
+            const reversedHostname = user.email.split('@')[1].split('').reverse().join('')
+            const emailData = {
+              email: user.email,
+              createdAt: new Date(),
+              reversedHostname,
+            }
+            user.emails = [emailData]
+          }
+
+          user.save(function (error) {
+            if (error) {
+              return callback(error);
+            }
+            return callback(null, user);
+          })
+          }
+      })
+    }
 }
 
 function _afterLoginSessionSetup(req, user, callback) {

@@ -119,8 +119,6 @@ services:
 
   redis:
     image: redis:5
-    ports:
-      - "127.0.0.1:6379:6379" # for debugging
     volumes:
       - redis-data:/data
 
@@ -140,6 +138,7 @@ services:
       target: dev
     env_file:
       - dev.env
+      - .env
     environment:
       - APP_NAME=Overleaf Community Edition
       - ENABLED_LINKED_FILE_TYPES=project_file,project_output_file
@@ -172,6 +171,6 @@ services:
       target: dev
     command: ["npx", "webpack", "serve", "--config", "webpack.config.dev-env.js"]
     ports:
-      - "127.0.0.1:80:3808"
+      - "127.0.0.1:3808:3808"
     volumes:
       - ./webpack.config.dev-env.js:/overleaf/services/web/webpack.config.dev-env.js

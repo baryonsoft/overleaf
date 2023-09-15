@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "async": "^3.2.2",
-    "ioredis": "~4.27.1"
+    "ioredis": "~4.28.0"
   },
   "devDependencies": {
     "@overleaf/logger": "*",

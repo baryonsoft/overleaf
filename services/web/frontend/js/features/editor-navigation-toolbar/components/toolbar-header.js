@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import MenuButton from './menu-button'
 import CobrandingLogo from './cobranding-logo'
 import BackToProjectsButton from './back-to-projects-button'
-import UpgradePrompt from './upgrade-prompt'
+import BackToBaryonBibButton from './back-to-baryonbib-button'
 import ChatToggleButton from './chat-toggle-button'
 import LayoutDropdownButton from './layout-dropdown-button'
 import OnlineUsersWidget from './online-users-widget'
@@ -49,13 +49,13 @@ const ToolbarHeader = React.memo(function ToolbarHeader({
       aria-label={t('project_layout_sharing_submission')}
     >
       <div className="toolbar-left">
+        <BackToBaryonBibButton />
+        <BackToProjectsButton />
         <MenuButton onClick={onShowLeftMenuClick} />
         {cobranding && cobranding.logoImgUrl && (
           <CobrandingLogo {...cobranding} />
         )}
-        <BackToProjectsButton />
       </div>
-      {window.showUpgradePrompt && <UpgradePrompt />}
       <ProjectNameEditableLabel
         className="toolbar-center"
         projectName={projectName}

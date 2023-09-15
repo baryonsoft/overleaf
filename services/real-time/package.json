@@ -34,7 +34,7 @@
     "request": "^2.88.2",
     "socket.io": "github:overleaf/socket.io#0.9.19-overleaf-10",
     "socket.io-client": "github:overleaf/socket.io-client#0.9.17-overleaf-5",
-    "underscore": "1.13.1"
+    "underscore": "1.13.6"
   },
   "devDependencies": {
     "chai": "^4.3.6",

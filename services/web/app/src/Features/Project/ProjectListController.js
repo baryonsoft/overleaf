@@ -474,7 +474,7 @@ async function projectListPage(req, res, next) {
  */
 async function getProjectsJson(req, res) {
   const { filters, page, sort } = req.body
-  const userId = SessionManager.getLoggedInUserId(req.session)
+  const userId = req.user.id ?? SessionManager.getLoggedInUserId(req.session)
   const projectsPage = await _getProjects(userId, filters, sort, page)
   res.json(projectsPage)
 }

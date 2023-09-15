@@ -1,0 +1,5 @@
+ARG SHARELATEX_TAG=ghcr.io/baryonsoft/overleaf/sharelatex:latest
+FROM $SHARELATEX_TAG
+
+RUN tlmgr --version
+RUN tlmgr install scheme-full

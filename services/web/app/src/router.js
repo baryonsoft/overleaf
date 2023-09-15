@@ -221,6 +221,12 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
   webRouter.get('/login', UserPagesController.loginPage)
   AuthenticationController.addEndpointToLoginWhitelist('/login')
 
+  webRouter.get('/login/oidc', AuthenticationController.oidcLogin)
+  AuthenticationController.addEndpointToLoginWhitelist('/login/oidc')
+
+  webRouter.get('/login/oidc/callback', AuthenticationController.oidcLoginCallback)
+  AuthenticationController.addEndpointToLoginWhitelist('/login/oidc/callback')
+
   webRouter.post(
     '/login',
     CaptchaMiddleware.validateCaptcha('login'),
@@ -460,6 +466,14 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
     RateLimiterMiddleware.rateLimit(rateLimiters.getProjects),
     ProjectListController.getProjectsJson
   )
+
+  webRouter.get(
+    '/api/projects',
+    AuthenticationController.requireToken(),
+    RateLimiterMiddleware.rateLimit(rateLimiters.getProjects),
+    ProjectListController.getProjectsJson
+  )
+  AuthenticationController.addEndpointToLoginWhitelist('/api/projects')
 
   for (const route of [
     // Keep the old route for continuous metrics
