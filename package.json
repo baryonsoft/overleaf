@@ -26,31 +26,19 @@
     "postinstall": "patch-package"
   },
   "workspaces": [
-    "jobs/mirror-documentation",
     "libraries/*",
-    "services/analytics",
     "services/chat",
     "services/clsi",
-    "services/clsi-perf",
     "services/contacts",
     "services/docstore",
     "services/document-updater",
     "services/filestore",
-    "services/freegeoip",
-    "services/github-sync",
     "services/history-v1",
-    "services/idp",
     "services/notifications",
     "services/project-history",
     "services/real-time",
-    "services/references",
     "services/spelling",
-    "services/templates",
-    "services/third-party-datastore",
-    "services/third-party-references",
-    "services/tpdsworker",
     "services/track-changes",
-    "services/web",
-    "tools/storybook"
+    "services/web"
   ]
 }
