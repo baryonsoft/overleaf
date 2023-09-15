@@ -6,6 +6,7 @@ console.log('set -ex')
 switch (process.argv.pop()) {
   case 'install':
     console.log('bun install --frozen-lockfile')
+    console.log('npm ci')
     break
   case 'compile':
     for (const service of services) {
