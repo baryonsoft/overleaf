@@ -30,6 +30,9 @@ RUN apt-get update \
       /etc/nginx/sites-enabled/default \
       /var/lib/apt/lists/*
 
+# Install bun
+RUN curl -fsSL https://bun.sh/install | bash
+
 # Install TexLive
 # ---------------
 # CTAN mirrors occasionally fail, in that case install TexLive using a
