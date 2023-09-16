@@ -42,7 +42,7 @@
     "cookie-signature": "^1.1.0",
     "mocha": "^10.2.0",
     "sandboxed-module": "~0.3.0",
-    "sinon": "^9.2.4",
+    "sinon": "^16.0.0",
     "timekeeper": "0.0.4",
     "uid-safe": "^2.1.5"
   }
