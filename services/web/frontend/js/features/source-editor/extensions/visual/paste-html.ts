@@ -16,11 +16,6 @@ export const pasteHtml = [
           return false
         }
 
-        // allow pasting an image to create a figure
-        if (clipboardData.files.length > 0) {
-          return false
-        }
-
         // only handle pasted HTML
         if (!clipboardData.types.includes('text/html')) {
           return false
@@ -38,6 +33,12 @@ export const pasteHtml = [
         const text = clipboardData.getData('text/plain').trim()
 
         if (html.length === 0) {
+          return false
+        }
+
+        // allow pasting an image to create a figure, if the HTML doesn't contain a table
+        // (because desktop Excel puts both an image and the HTML table on the clipboard)
+        if (clipboardData.files.length > 0 && !html.includes('<table')) {
           return false
         }
 
@@ -83,11 +84,33 @@ const removeUnwantedElements = (
   }
 }
 
+const findCodeContainingElement = (documentElement: HTMLElement) => {
+  let result: HTMLElement | null
+
+  // a code element
+  result = documentElement.querySelector<HTMLElement>('code')
+  if (result) {
+    return result
+  }
+
+  // a pre element with "monospace" somewhere in the font family
+  result = documentElement.querySelector<HTMLPreElement>('pre')
+  if (result?.style.fontFamily.includes('monospace')) {
+    return result
+  }
+
+  return null
+}
+
 // return true if the text content of the first <code> element
 // is the same as the text content of the whole document element
-const onlyCode = (documentElement: HTMLElement) =>
-  documentElement.querySelector('code')?.textContent?.trim() ===
-  documentElement.textContent?.trim()
+const onlyCode = (documentElement: HTMLElement) => {
+  const codeElement = findCodeContainingElement(documentElement)
+
+  return (
+    codeElement?.textContent?.trim() === documentElement.textContent?.trim()
+  )
+}
 
 const htmlToLaTeX = (documentElement: HTMLElement) => {
   // remove style elements
@@ -113,8 +136,13 @@ const htmlToLaTeX = (documentElement: HTMLElement) => {
     return ''
   }
 
-  // normalise multiple newlines
-  return text.replaceAll(/\n{2,}/g, '\n\n')
+  return (
+    text
+      // remove zero-width spaces (e.g. those added by Powerpoint)
+      .replaceAll('​', '')
+      // normalise multiple newlines
+      .replaceAll(/\n{2,}/g, '\n\n')
+  )
 }
 
 const processWhitespace = (documentElement: HTMLElement) => {
@@ -149,12 +177,16 @@ const specialCharacterReplacer = (
   return `${prefix}\\${char}`
 }
 
+const isElementContainingCode = (element: HTMLElement) =>
+  element.tagName === 'CODE' ||
+  (element.tagName === 'PRE' && element.style.fontFamily.includes('monospace'))
+
 const protectSpecialCharacters = (documentElement: HTMLElement) => {
   const walker = document.createTreeWalker(
     documentElement,
     NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
     node =>
-      isElementNode(node) && node.tagName === 'CODE'
+      isElementNode(node) && isElementContainingCode(node)
         ? NodeFilter.FILTER_REJECT
         : NodeFilter.FILTER_ACCEPT
   )
@@ -217,6 +249,25 @@ const matchingParents = (element: HTMLElement, selector: string) => {
   return matches
 }
 
+const urlCharacterReplacements = new Map<string, string>([
+  ['\\', '\\\\'],
+  ['#', '\\#'],
+  ['%', '\\%'],
+  ['{', '%7B'],
+  ['}', '%7D'],
+])
+
+const protectUrlCharacters = (url: string) => {
+  // NOTE: add new characters to both this regex and urlCharacterReplacements
+  return url.replaceAll(/[\\#%{}]/g, match => {
+    const replacement = urlCharacterReplacements.get(match)
+    if (!replacement) {
+      throw new Error(`No replacement found for ${match}`)
+    }
+    return replacement
+  })
+}
+
 const processLists = (element: HTMLElement) => {
   for (const list of element.querySelectorAll('ol,ul')) {
     // if the list has only one item, replace the list with an element containing the contents of the item
@@ -229,8 +280,34 @@ const processLists = (element: HTMLElement) => {
   }
 }
 
+const removeNonContentTextNodes = (table: HTMLTableElement) => {
+  // remove text nodes that are direct children of non-content table elements
+  const containers = table.querySelectorAll('thead,tbody,tr')
+  for (const element of [table, ...containers]) {
+    for (const childNode of element.childNodes) {
+      if (childNode.nodeType === Node.TEXT_NODE) {
+        element.removeChild(childNode)
+      }
+    }
+  }
+
+  // remove whitespace-only text nodes at the start or end of table cells
+  for (const element of table.querySelectorAll('th,td')) {
+    for (const childNode of [element.firstChild, element.lastChild]) {
+      if (
+        childNode?.nodeType === Node.TEXT_NODE &&
+        childNode.textContent?.trim() === ''
+      ) {
+        element.removeChild(childNode)
+      }
+    }
+  }
+}
+
 const processTables = (element: HTMLElement) => {
   for (const table of element.querySelectorAll('table')) {
+    removeNonContentTextNodes(table)
+
     // create a wrapper element for the table and the caption
     const container = document.createElement('div')
     container.className = 'ol-table-wrap'
@@ -449,8 +526,7 @@ const selectors = [
   createSelector({
     selector: 'b',
     match: element =>
-      element.style.fontWeight !== 'normal' &&
-      !(parseInt(element.style.fontWeight) < 700) &&
+      !element.style.fontWeight &&
       !isHeading(element.parentElement) &&
       hasContent(element),
     start: () => '\\textbf{',
@@ -468,17 +544,13 @@ const selectors = [
   }),
   createSelector({
     selector: 'strong',
-    match: element =>
-      element.style.fontWeight !== 'normal' &&
-      !(parseInt(element.style.fontWeight) < 700) &&
-      hasContent(element),
+    match: element => !element.style.fontWeight && hasContent(element),
     start: () => '\\textbf{',
     end: () => '}',
   }),
   createSelector({
     selector: 'i',
-    match: element =>
-      element.style.fontStyle !== 'normal' && hasContent(element),
+    match: element => !element.style.fontStyle && hasContent(element),
     start: () => '\\textit{',
     end: () => '}',
   }),
@@ -491,14 +563,13 @@ const selectors = [
   }),
   createSelector({
     selector: 'em',
-    match: element =>
-      element.style.fontStyle !== 'normal' && hasContent(element),
+    match: element => !element.style.fontStyle && hasContent(element),
     start: () => '\\textit{',
     end: () => '}',
   }),
   createSelector({
     selector: 'sup',
-    match: element => hasContent(element),
+    match: element => !element.style.verticalAlign && hasContent(element),
     start: () => '\\textsuperscript{',
     end: () => '}',
   }),
@@ -511,7 +582,7 @@ const selectors = [
   }),
   createSelector({
     selector: 'sub',
-    match: element => hasContent(element),
+    match: element => !element.style.verticalAlign && hasContent(element),
     start: () => '\\textsubscript{',
     end: () => '}',
   }),
@@ -525,8 +596,11 @@ const selectors = [
   createSelector({
     selector: 'a',
     match: element => !!element.href && hasContent(element),
-    start: (element: HTMLAnchorElement) => `\\href{${element.href}}{`,
-    end: element => `}`,
+    start: (element: HTMLAnchorElement) => {
+      const url = protectUrlCharacters(element.href)
+      return `\\href{${url}}{`
+    },
+    end: () => `}`,
   }),
   createSelector({
     selector: 'h1',
@@ -578,6 +652,15 @@ const selectors = [
     end: () => `\n\\end{verbatim}\n\n`,
   }),
   createSelector({
+    selector: 'pre',
+    match: element =>
+      element.style.fontFamily.includes('monospace') &&
+      element.firstElementChild?.nodeName !== 'CODE' &&
+      hasContent(element),
+    start: () => `\n\n\\begin{verbatim}\n`,
+    end: () => `\n\\end{verbatim}\n\n`,
+  }),
+  createSelector({
     selector: '.ol-table-wrap',
     start: () => `\n\n\\begin{table}\n\\centering\n`,
     end: () => `\n\\end{table}\n\n`,
@@ -619,11 +702,13 @@ const selectors = [
     selector: 'tr > td, tr > th',
     start: (element: HTMLTableCellElement) => {
       let output = ''
-      if (element.getAttribute('colspan')) {
+      const colspan = element.getAttribute('colspan')
+      if (colspan && Number(colspan) > 1) {
         output += startMulticolumn(element)
       }
       // NOTE: multirow is nested inside multicolumn
-      if (element.getAttribute('rowspan')) {
+      const rowspan = element.getAttribute('rowspan')
+      if (rowspan && Number(rowspan) > 1) {
         output += startMultirow(element)
       }
       return output
@@ -631,10 +716,12 @@ const selectors = [
     end: element => {
       let output = ''
       // NOTE: multirow is nested inside multicolumn
-      if (element.getAttribute('rowspan')) {
+      const rowspan = element.getAttribute('rowspan')
+      if (rowspan && Number(rowspan) > 1) {
         output += '}'
       }
-      if (element.getAttribute('colspan')) {
+      const colspan = element.getAttribute('colspan')
+      if (colspan && Number(colspan) > 1) {
         output += '}'
       }
       const row = element.parentElement as HTMLTableRowElement

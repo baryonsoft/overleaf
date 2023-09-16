@@ -237,6 +237,26 @@ describe('<CodeMirrorEditor/> paste HTML in Visual mode', function () {
     )
   })
 
+  it('ignores rowspan="1" and colspan="1"', function () {
+    mountEditor()
+
+    const data = [
+      `<table><tbody>`,
+      `<tr><td colspan="1" rowspan="1">test</td><td>test</td></tr>`,
+      `<tr><td>test</td><td>test</td><td>test</td></tr>`,
+      `</tbody></table>`,
+    ].join('')
+
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/html', data)
+    cy.get('@content').trigger('paste', { clipboardData })
+
+    cy.get('@content').should(
+      'have.text',
+      '\\begin{tabular}{l l l}test & test ↩test & test & test ↩\\end{tabular}'
+    )
+  })
+
   it('handles a pasted table with adjacent borders and merged cells', function () {
     mountEditor()
 
@@ -277,7 +297,8 @@ describe('<CodeMirrorEditor/> paste HTML in Visual mode', function () {
   it('handles a pasted link', function () {
     mountEditor()
 
-    const data = '<a href="https://example.com/">foo</a>'
+    const data =
+      '<a href="https://example.com/?q=$foo_~bar&x=\\bar#fragment{y}%2">foo</a>'
 
     const clipboardData = new DataTransfer()
     clipboardData.setData('text/html', data)
@@ -285,25 +306,29 @@ describe('<CodeMirrorEditor/> paste HTML in Visual mode', function () {
 
     cy.get('@content').should('have.text', '{foo}')
     cy.get('.ol-cm-command-href').should('have.length', 1)
+
+    cy.get('.cm-line').eq(0).type('{leftArrow}')
+    cy.findByLabelText('URL').should(
+      'have.value',
+      'https://example.com/?q=$foo_~bar&x=\\\\bar\\#fragment%7By%7D\\%2'
+    )
+    // TODO: assert that the "Go to page" link has been unescaped
   })
 
-  it('handles a pasted code block', function () {
+  it('handles pasted code in pre blocks', function () {
     mountEditor()
 
-    const data = 'test <pre><code>foo</code></pre> test'
+    const data = `test <pre><code>\\textbf{foo}</code></pre> <pre style="font-family: 'Lucida Console', monospace">\\textbf{foo}</pre> test`
 
     const clipboardData = new DataTransfer()
     clipboardData.setData('text/html', data)
     cy.get('@content').trigger('paste', { clipboardData })
 
-    cy.get('@content').should('have.text', 'test foo test')
-    cy.get('.ol-cm-environment-verbatim').should('have.length', 5)
-
-    cy.get('.cm-line').eq(2).click()
     cy.get('@content').should(
       'have.text',
-      'test \\begin{verbatim}foo\\end{verbatim} test'
+      'test \\textbf{foo} \\textbf{foo} test'
     )
+    cy.get('.ol-cm-environment-verbatim').should('have.length', 10)
   })
 
   it('handles a pasted blockquote', function () {
@@ -407,6 +432,22 @@ describe('<CodeMirrorEditor/> paste HTML in Visual mode', function () {
     cy.get('.ol-cm-environment-verbatim').should('have.length', 0)
   })
 
+  it('use text/plain for a pre element with monospace font', function () {
+    mountEditor()
+
+    const clipboardData = new DataTransfer()
+    clipboardData.setData(
+      'text/html',
+      '<pre style="font-family:Courier,monospace">foo</pre>'
+    )
+    clipboardData.setData('text/plain', 'foo')
+    cy.get('@content').trigger('paste', { clipboardData })
+
+    cy.get('@content').should('have.text', 'foo')
+    cy.get('.ol-cm-command-verb').should('have.length', 0)
+    cy.get('.ol-cm-environment-verbatim').should('have.length', 0)
+  })
+
   it('handles pasted text with formatting', function () {
     mountEditor()
 
@@ -479,6 +520,25 @@ describe('<CodeMirrorEditor/> paste HTML in Visual mode', function () {
     cy.get('.ol-cm-command-textit').should('have.length', 0)
   })
 
+  it('handles pasted elements with duplicate CSS formatting', function () {
+    mountEditor()
+
+    const data = [
+      '<strong style="font-weight:bold">foo</strong>',
+      '<b style="font-weight:bold">foo</b>',
+      '<em style="font-style:italic">foo</em>',
+      '<i style="font-style:italic">foo</i>',
+      'foo',
+    ].join(' ')
+
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/html', data)
+    cy.get('@content').trigger('paste', { clipboardData })
+
+    cy.get('.ol-cm-command-textbf').should('have.length', 2)
+    cy.get('.ol-cm-command-textit').should('have.length', 2)
+  })
+
   it('removes a non-breaking space when a text node contains no other content', function () {
     mountEditor()
 
@@ -501,6 +561,18 @@ describe('<CodeMirrorEditor/> paste HTML in Visual mode', function () {
     cy.get('@content').trigger('paste', { clipboardData })
 
     cy.get('@content').should('have.text', 'foo bar')
+  })
+
+  it('removes all zero-width spaces', function () {
+    mountEditor()
+
+    const data = 'foo\u200bbar'
+
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/html', data)
+    cy.get('@content').trigger('paste', { clipboardData })
+
+    cy.get('@content').should('have.text', 'foobar')
   })
 
   it('ignores HTML pasted from VS Code', function () {
@@ -547,5 +619,23 @@ describe('<CodeMirrorEditor/> paste HTML in Visual mode', function () {
     cy.get('@content').should('have.text', 'foo & bar~baz \\textbf{foo}')
     cy.get('.ol-cm-character').should('have.length', 2)
     cy.get('.ol-cm-command-verb').should('have.length', 1)
+  })
+
+  it('tidies whitespace in pasted tables', function () {
+    mountEditor()
+
+    const data = `<table>
+ <tr>
+  <td>
+  <p><b>test</b></p>
+  </td>
+</tr>
+</table>`
+
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/html', data)
+    cy.get('@content').trigger('paste', { clipboardData })
+
+    cy.get('.cm-line').should('have.length', 8)
   })
 })

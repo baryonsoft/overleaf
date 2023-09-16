@@ -21,7 +21,7 @@
     "@overleaf/o-error": "*",
     "@overleaf/object-persistor": "*",
     "@overleaf/settings": "*",
-    "@overleaf/stream-utils": "^0.1.0",
+    "@overleaf/stream-utils": "workspace:*",
     "async": "^3.2.2",
     "body-parser": "^1.19.0",
     "bson": "^1.1.4",
